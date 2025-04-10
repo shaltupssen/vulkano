@@ -1378,30 +1378,17 @@ impl MemoryImportInfo {
                 }
 
                 // VUID-VkMemoryAllocateInfo-memoryTypeIndex-00645
-                let memory_type_bits: u32 = {
-                    let fns = device.fns();
-                    let func = fns
-                        .khr_external_memory_win32
-                        .get_memory_win32_handle_properties_khr;
-                    let mut props = vk::MemoryWin32HandlePropertiesKHR::default();
-                    unsafe {
-                        // Call the Vulkan function to get memory properties
-                        let vk_res =
-                            func(device.handle(), (*handle_type).into(), *handle, &mut props);
-                        if vk_res == vk::Result::SUCCESS {
-                            Ok::<u32, Box<ValidationError>>(props.memory_type_bits)
-                        } else {
-                            return Err(Box::new(ValidationError {
-                                problem: format!(
-                                    "`vkGetMemoryWin32HandlePropertiesKHR` failed with error {:?}",
-                                    vk_res
-                                )
-                                .into(),
-                                ..Default::default()
-                            }));
-                        }
-                    }
-                }?;
+                let memory_type_bits = device
+                    .memory_win32_handle_properties(*handle_type, *handle)
+                    .map_err(|e| match e {
+                        Validated::Error(vulkan_error) => Box::new(ValidationError {
+                            context: "memory_win32_handle_properties".into(),
+                            problem: format!("Vulkan error {:?}", vulkan_error).into(),
+                            ..Default::default()
+                        }),
+                        Validated::ValidationError(err) => err,
+                    })?
+                    .memory_type_bits;
 
                 if (memory_type_bits & (1u32 << memory_type_index)) == 0 {
                     return Err(Box::new(ValidationError {

@@ -28,6 +28,7 @@ slabbin = { workspace = true }
 smallvec = { workspace = true }
 thread_local = { workspace = true }
 vulkano-macros = { workspace = true, optional = true }
+winapi = { version = "0.3.9", features = ["handleapi", "errhandlingapi", "ntdef", "minwindef"] }
 
 [target.'cfg(target_vendor = "apple")'.dependencies]
 raw-window-metal = { workspace = true }
